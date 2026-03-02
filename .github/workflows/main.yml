@@ -1,0 +1,31 @@
+name: Final Build APK
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch: # هذا الزر للتشغيل اليدوي
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Create Flutter Project
+        run: |
+          flutter create --project-name smart_stock my_app
+          # نقل ملفك النظيف لمكانه الصحيح داخل المشروع
+          cp main.dart my_app/lib/main.dart || cp lib/main.dart my_app/lib/main.dart
+
+      - name: Build APK
+        run: |
+          cd my_app
+          flutter build apk --debug --no-tree-shake-icons
+
+      - name: Upload Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartStock-App
+          path: my_app/build/app/outputs/flutter-apk/app-debug.apk
