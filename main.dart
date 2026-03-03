@@ -3,7 +3,6 @@ import 'package:get_storage/get_storage.dart';
 import 'dart:async';
 
 void main() async {
-  // تهيئة مخزن البيانات قبل تشغيل التطبيق
   await GetStorage.init();
   runApp(const MaterialApp(
     home: SplashScreen(),
@@ -11,19 +10,61 @@ void main() async {
   ));
 }
 
-// --- واجهة البداية (Splash Screen) ---
-class SplashScreen extends StatelessWidget {
+// --- واجهة النجوم والمحرك الذكي (Splash) ---
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
   @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(duration: const Duration(seconds: 2), vsync: this)..repeat(reverse: true);
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    Timer(const Duration(seconds: 4), () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (c) => const MainHost())));
+  }
+
+  @override
+  void dispose() { _controller.dispose(); super.dispose(); }
+
+  @override
   Widget build(BuildContext context) {
-    Timer(const Duration(seconds: 3), () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (c) => const MainHost())));
     return Scaffold(
-      backgroundColor: const Color(0xFF020409),
-      body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        const Icon(Icons.auto_awesome_motion, size: 80, color: Colors.orangeAccent),
-        const SizedBox(height: 20),
-        const Text("SMART STOCK", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 5)),
-      ])),
+      backgroundColor: const Color(0xFF020409), // أسود ملكي
+      body: Stack(
+        children: [
+          // تأثير النجوم (خلفية)
+          ...List.generate(20, (i) => Positionchild(
+            top: (i * 50).toDouble(), left: (i * 20).toDouble(),
+            child: Icon(Icons.star, color: Colors.white.withOpacity(0.1), size: 10),
+          )),
+          Center(
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              ScaleTransition(
+                scale: _animation,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.orangeAccent.withOpacity(0.3), blurRadius: 40, spreadRadius: 10)],
+                  ),
+                  child: const Icon(Icons.auto_awesome_motion, size: 100, color: Colors.orangeAccent),
+                ),
+              ),
+              const SizedBox(height: 30),
+              const Text("SMART", style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 10)),
+              const Text("STOCK", style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, color: Colors.orangeAccent, letterSpacing: 10)),
+              const SizedBox(height: 20),
+              const CircularProgressIndicator(color: Colors.orangeAccent, strokeWidth: 2),
+            ]),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -35,31 +76,35 @@ class MainHost extends StatefulWidget {
 }
 
 class _MainHostState extends State<MainHost> {
-  int _currentIndex = 2; // البدء من قسم المخزن
+  int _currentIndex = 2;
   final List<Widget> _pages = [const AnalyticsPage(), const SalesPage(), const SuperStorePro()];
 
   @override
   Widget build(BuildContext context) {
     return Directionality(textDirection: TextDirection.rtl, child: Scaffold(
       body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        backgroundColor: const Color(0xFF0D1B2A),
-        selectedItemColor: Colors.orangeAccent,
-        unselectedItemColor: Colors.white70,
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) => setState(() => _currentIndex = index),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: "السجل"),
-          BottomNavigationBarItem(icon: Icon(Icons.point_of_sale), label: "المبيعات"),
-          BottomNavigationBarItem(icon: Icon(Icons.inventory), label: "المخزن"),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(border: Border(top: BorderSide(color: Colors.orangeAccent.withOpacity(0.2), width: 0.5))),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          backgroundColor: const Color(0xFF0D1B2A),
+          selectedItemColor: Colors.orangeAccent,
+          unselectedItemColor: Colors.white38,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          type: BottomNavigationBarType.fixed,
+          onTap: (index) => setState(() => _currentIndex = index),
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: "السجل"),
+            BottomNavigationBarItem(icon: Icon(Icons.point_of_sale_rounded), label: "المبيعات"),
+            BottomNavigationBarItem(icon: Icon(Icons.inventory_2_rounded), label: "المخزن"),
+          ],
+        ),
       ),
     ));
   }
 }
 
-// --- قسم المخزن الذكي (Smart Stock) ---
+// --- صفحة المخزن الرئيسة (التصميم المطور) ---
 class SuperStorePro extends StatefulWidget {
   const SuperStorePro({super.key});
   @override
@@ -71,14 +116,12 @@ class _SuperStoreProState extends State<SuperStorePro> {
   List _inventory = [];
   String _currency = "د.ع";
   String _search = "";
-  
   final nameCtrl = TextEditingController(), barcodeCtrl = TextEditingController(), companyCtrl = TextEditingController();
   final boxesCtrl = TextEditingController(text: "0"), pPerBoxCtrl = TextEditingController(text: "1");
   final jomlaPriceCtrl = TextEditingController(), mofradPriceCtrl = TextEditingController();
 
   @override
   void initState() { super.initState(); _refresh(); }
-  
   _refresh() { setState(() => _inventory = box.read('items') ?? []); }
 
   void _showForm({Map? item, int? index}) {
@@ -88,116 +131,125 @@ class _SuperStoreProState extends State<SuperStorePro> {
       jomlaPriceCtrl.text = item['jPrice'].toString(); mofradPriceCtrl.text = item['mPrice'].toString();
     } else { _clear(); }
 
-    showDialog(context: context, builder: (ctx) => StatefulBuilder(builder: (context, setS) => AlertDialog(
-      title: Text(item == null ? "إضافة مادة جديدة" : "تعديل المادة"),
-      content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        _inp(barcodeCtrl, "الباركود"),
-        _inp(nameCtrl, "اسم المادة"),
-        _inp(companyCtrl, "اسم الشركة"),
-        _counter(boxesCtrl, "عدد الكراتين", setS),
-        _counter(pPerBoxCtrl, "القطع في الكرتون", setS),
-        _inp(jomlaPriceCtrl, "سعر الجملة", isNum: true),
-        _inp(mofradPriceCtrl, "سعر المفرد", isNum: true),
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (ctx) => Container(
+      decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, top: 20, left: 20, right: 20),
+      child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 50, height: 5, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
+        const SizedBox(height: 20),
+        Text(item == null ? "إضافة مادة للمخزن" : "تعديل البيانات", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 20),
+        _inp(barcodeCtrl, "باركود المادة", icon: Icons.qr_code),
+        _inp(nameCtrl, "اسم المنتج بالكامل", icon: Icons.shopping_basket),
+        _inp(companyCtrl, "الشركة المصنعة", icon: Icons.business),
+        const Divider(),
+        Row(children: [
+          Expanded(child: _inp(boxesCtrl, "الكراتين", isNum: true)),
+          const SizedBox(width: 10),
+          Expanded(child: _inp(pPerBoxCtrl, "القطع داخلها", isNum: true)),
+        ]),
+        Row(children: [
+          Expanded(child: _inp(jomlaPriceCtrl, "سعر الجملة", isNum: true)),
+          const SizedBox(width: 10),
+          Expanded(child: _inp(mofradPriceCtrl, "سعر المفرد", isNum: true)),
+        ]),
+        const SizedBox(height: 20),
+        SizedBox(width: double.infinity, height: 55, child: ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0D1B2A), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+          onPressed: () {
+            int b = int.tryParse(boxesCtrl.text) ?? 0;
+            int p = int.tryParse(pPerBoxCtrl.text) ?? 1;
+            var data = {
+              'name': nameCtrl.text, 'barcode': barcodeCtrl.text, 'company': companyCtrl.text,
+              'boxes': b, 'pPerBox': p, 'totalPieces': b * p,
+              'jPrice': double.tryParse(jomlaPriceCtrl.text) ?? 0, 'mPrice': double.tryParse(mofradPriceCtrl.text) ?? 0,
+            };
+            List current = List.from(_inventory);
+            if (index == null) current.add(data); else current[index] = data;
+            box.write('items', current); Navigator.pop(ctx); _refresh();
+          },
+          child: const Text("حـفـظ الـمـادة", style: TextStyle(color: Colors.orangeAccent, fontSize: 18, fontWeight: FontWeight.bold)),
+        )),
+        const SizedBox(height: 20),
       ])),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("إلغاء")),
-        ElevatedButton(onPressed: () {
-          int b = int.tryParse(boxesCtrl.text) ?? 0;
-          int p = int.tryParse(pPerBoxCtrl.text) ?? 1;
-          var data = {
-            'name': nameCtrl.text, 'barcode': barcodeCtrl.text, 'company': companyCtrl.text,
-            'boxes': b, 'pPerBox': p, 'totalPieces': b * p,
-            'jPrice': double.tryParse(jomlaPriceCtrl.text) ?? 0, 'mPrice': double.tryParse(mofradPriceCtrl.text) ?? 0,
-          };
-          List currentItems = List.from(_inventory);
-          if (index == null) { currentItems.add(data); } else { currentItems[index] = data; }
-          box.write('items', currentItems);
-          Navigator.pop(ctx); _refresh();
-        }, child: const Text("حفظ المادة"))
-      ],
-    )));
+    ));
   }
 
   _clear() { nameCtrl.clear(); barcodeCtrl.clear(); companyCtrl.clear(); boxesCtrl.text="0"; pPerBoxCtrl.text="1"; jomlaPriceCtrl.clear(); mofradPriceCtrl.clear(); }
-  
-  Widget _inp(TextEditingController c, String l, {bool isNum = false}) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: TextField(controller: c, keyboardType: isNum ? TextInputType.number : TextInputType.text, decoration: InputDecoration(labelText: l, border: const OutlineInputBorder())),
-  );
-
-  Widget _counter(TextEditingController c, String l, Function s) => Row(children: [
-    Text(l),
-    IconButton(onPressed: ()=>s(()=>c.text=(int.parse(c.text)-1).toString()), icon: const Icon(Icons.remove_circle_outline)),
-    Expanded(child: TextField(controller: c, textAlign: TextAlign.center, keyboardType: TextInputType.number)),
-    IconButton(onPressed: ()=>s(()=>c.text=(int.parse(c.text)+1).toString()), icon: const Icon(Icons.add_circle_outline)),
-  ]);
+  Widget _inp(TextEditingController c, String l, {bool isNum = false, IconData? icon}) => Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: TextField(controller: c, keyboardType: isNum ? TextInputType.number : TextInputType.text, decoration: InputDecoration(labelText: l, prefixIcon: Icon(icon, size: 20), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))));
 
   @override
   Widget build(BuildContext context) {
-    var filtered = _inventory.where((e) => e['name'].toString().contains(_search) || e['barcode'].toString().contains(_search)).toList();
-    
+    var filtered = _inventory.where((e) => e['name'].contains(_search) || e['barcode'].contains(_search)).toList();
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F7FA),
       appBar: AppBar(
-        title: const Text("SMART STOCK", style: TextStyle(letterSpacing: 2, fontWeight: FontWeight.bold)),
+        title: const Text("SMART STOCK", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 3, fontSize: 24, color: Colors.orangeAccent)),
+        centerTitle: true,
         backgroundColor: const Color(0xFF0D1B2A),
-        actions: [
-          TextButton(
-            onPressed: () => setState(() => _currency = _currency == "د.ع" ? "\$" : "د.ع"),
-            child: Text(_currency, style: const TextStyle(color: Colors.orangeAccent, fontSize: 20, fontWeight: FontWeight.bold)),
-          )
-        ],
+        elevation: 10,
+        actions: [IconButton(onPressed: () => setState(() => _currency = _currency == "د.ع" ? "\$" : "د.ع"), icon: CircleAvatar(backgroundColor: Colors.orangeAccent, child: Text(_currency, style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold))))],
       ),
       body: Column(children: [
-        Padding(padding: const EdgeInsets.all(8), child: TextField(onChanged: (v)=>setState(()=>_search=v), decoration: const InputDecoration(hintText: "بحث عن مادة أو باركود...", prefixIcon: Icon(Icons.search), border: OutlineInputBorder()))),
+        Container(
+          padding: const EdgeInsets.all(15),
+          decoration: const BoxDecoration(color: Color(0xFF0D1B2A), borderRadius: BorderRadius.vertical(bottom: Radius.circular(25))),
+          child: TextField(
+            onChanged: (v) => setState(() => _search = v),
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(hintText: "ابحث عن مادة أو امسح باركود...", hintStyle: const TextStyle(color: Colors.white38), prefixIcon: const Icon(Icons.search, color: Colors.orangeAccent), filled: true, fillColor: Colors.white.withOpacity(0.1), border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none)),
+          ),
+        ),
         Expanded(child: filtered.isEmpty 
-          ? Opacity(opacity: 0.3, child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.inventory_2_outlined, size: 100, color: Colors.grey), const Text("المخزن فارغ", style: TextStyle(fontSize: 20)) ]))) 
+          ? Center(child: Opacity(opacity: 0.2, child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.inventory_2_rounded, size: 120), const Text("المخزن فارغ حالياً", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)) ]))) 
           : ListView.builder(
+              padding: const EdgeInsets.all(10),
               itemCount: filtered.length,
               itemBuilder: (ctx, i) {
-                var item = filtered[i];
-                int total = item['totalPieces'] ?? 0;
-                bool isLow = total <= 2;
-                // نظام الألوان التبادلي (أبيض / رصاصي) + تظليل النفاذ بالأحمر
-                Color rowColor = isLow ? Colors.red.shade100 : (i % 2 == 0 ? Colors.white : Colors.grey.shade200);
-
-                return Container(
-                  color: rowColor,
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                  child: Row(children: [
-                    // اسم المادة تحتها اسم الشركة
-                    Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text(item['company'], style: const TextStyle(fontSize: 12, color: Colors.blueGrey)),
-                    ])),
-                    // عدد الكراتين تحتها القطع
-                    Expanded(flex: 2, child: Column(children: [
-                      Text("كرتون: ${item['boxes']}"),
-                      Text("قطع: ${item['pPerBox']}", style: const TextStyle(fontSize: 12)),
-                    ])),
-                    // سعر الجملة تحتها المفرد
-                    Expanded(flex: 2, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text("${item['jPrice']} $_currency", style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text("${item['mPrice']} $_currency", style: const TextStyle(fontSize: 12, color: Colors.green)),
-                    ])),
-                    // خيارات التعديل والحذف
-                    PopupMenuButton(onSelected: (v) {
-                      if (v=='e') _showForm(item: item, index: _inventory.indexOf(item));
-                      else { _inventory.remove(item); box.write('items', _inventory); _refresh(); }
-                    }, itemBuilder: (ctx)=>[
-                      const PopupMenuItem(value: 'e', child: Row(children: [Icon(Icons.edit, color: Colors.blue), SizedBox(width: 8), Text("تعديل")])),
-                      const PopupMenuItem(value: 'd', child: Row(children: [Icon(Icons.delete, color: Colors.red), SizedBox(width: 8), Text("حذف")])),
+                bool low = (filtered[i]['totalPieces'] ?? 0) <= 2;
+                return Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  color: low ? Colors.red[50] : (i % 2 == 0 ? Colors.white : Colors.grey[50]),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15), side: BorderSide(color: low ? Colors.red : Colors.transparent, width: 1)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(children: [
+                      Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(filtered[i]['name'], style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF0D1B2A))),
+                        Text(filtered[i]['company'], style: const TextStyle(fontSize: 13, color: Colors.blueGrey, fontWeight: FontWeight.w600)),
+                      ])),
+                      Expanded(flex: 2, child: Column(children: [
+                        Text("كرتون: ${filtered[i]['boxes']}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Text("قطع: ${filtered[i]['pPerBox']}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                      ])),
+                      Expanded(flex: 2, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                        Text("${filtered[i]['jPrice']} $_currency", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                        Text("${filtered[i]['mPrice']} $_currency", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.green)),
+                      ])),
+                      const SizedBox(width: 5),
+                      PopupMenuButton(
+                        icon: const Icon(Icons.more_vert, color: Color(0xFF0D1B2A)),
+                        onSelected: (v) { if (v == 'e') _showForm(item: filtered[i], index: i); else { _inventory.removeAt(i); box.write('items', _inventory); _refresh(); } },
+                        itemBuilder: (ctx) => [const PopupMenuItem(value: 'e', child: Text("تعديل")), const PopupMenuItem(value: 'd', child: Text("حذف"))],
+                      ),
                     ]),
-                  ]),
+                  ),
                 );
               },
             )),
       ]),
-      floatingActionButton: FloatingActionButton(backgroundColor: Colors.orangeAccent, onPressed: ()=>_showForm(), child: const Icon(Icons.add, size: 30, color: Colors.black)),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: const Color(0xFF0D1B2A),
+        onPressed: () => _showForm(),
+        label: const Text("إضافة مادة", style: TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.orangeAccent),
+      ),
     );
   }
 }
 
-// --- قسم المبيعات (Sales) ---
+// --- قسم المبيعات المتطور ---
 class SalesPage extends StatefulWidget {
   const SalesPage({super.key});
   @override
@@ -215,17 +267,7 @@ class _SalesPageState extends State<SalesPage> {
     if (idx != -1) {
       var item = items[idx];
       if (item['totalPieces'] > 0) {
-        setState(() {
-          item['totalPieces'] -= 1;
-          // تحديث عدد الكراتين تلقائياً عند نقص القطع
-          item['boxes'] = item['totalPieces'] ~/ item['pPerBox'];
-          items[idx] = item;
-          box.write('items', items);
-          cart.insert(0, item); // إضافة المادة لأعلى القائمة
-          scanCtrl.clear();
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("هذه المادة نفذت من المخزن!")));
+        setState(() { item['totalPieces'] -= 1; item['boxes'] = item['totalPieces'] ~/ item['pPerBox']; items[idx] = item; box.write('items', items); cart.insert(0, item); scanCtrl.clear(); });
       }
     }
   }
@@ -233,34 +275,25 @@ class _SalesPageState extends State<SalesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("قسم المبيعات"), backgroundColor: Colors.green.shade700),
+      appBar: AppBar(title: const Text("نظام المبيعات السريع", style: TextStyle(fontWeight: FontWeight.bold)), backgroundColor: Colors.green[800], centerTitle: true),
       body: Column(children: [
-        Padding(padding: const EdgeInsets.all(10), child: TextField(
-          controller: scanCtrl, 
-          onSubmitted: _onScan, 
-          autofocus: true, 
-          decoration: const InputDecoration(hintText: "مسح باركود (يدوي أو خارجي)", border: OutlineInputBorder(), prefixIcon: Icon(Icons.qr_code_scanner)))),
-        const Divider(),
-        Expanded(child: cart.isEmpty 
-          ? const Center(child: Text("انتظار المسح..."))
-          : ListView.builder(itemCount: cart.length, itemBuilder: (ctx, i) => ListTile(
-              leading: const Icon(Icons.shopping_bag, color: Colors.green),
-              title: Text(cart[i]['name']), 
-              trailing: Text("${cart[i]['mPrice']} د.ع", style: const TextStyle(fontWeight: FontWeight.bold))))),
+        Padding(padding: const EdgeInsets.all(15), child: TextField(controller: scanCtrl, onSubmitted: _onScan, autofocus: true, decoration: InputDecoration(hintText: "امسح الباركود للبيع المباشر...", prefixIcon: const Icon(Icons.qr_code_scanner, color: Colors.green), border: OutlineInputBorder(borderRadius: BorderRadius.circular(15))))),
+        Expanded(child: cart.isEmpty ? const Center(child: Text("بانتظار عملية بيع...")) : ListView.builder(itemCount: cart.length, itemBuilder: (ctx, i) => Card(margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), child: ListTile(leading: const Icon(Icons.check_circle, color: Colors.green), title: Text(cart[i]['name'], style: const TextStyle(fontWeight: FontWeight.bold)), trailing: Text("${cart[i]['mPrice']} د.ع", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w900)))))),
       ]),
     );
   }
 }
 
-// --- سجل المبيعات ---
 class AnalyticsPage extends StatelessWidget {
   const AnalyticsPage({super.key});
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text("سجل المبيعات")), 
-    body: const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(Icons.cloud_done_outlined, size: 60, color: Colors.blue),
-      SizedBox(height: 10),
-      Text("السجل محفوظ ويتم مزامنته تلقائياً"),
-    ])));
+  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text("التقارير والسجل")), body: const Center(child: Icon(Icons.bar_chart_rounded, size: 100, color: Colors.grey)));
+}
+
+// كلاس مساعد لتحديد موقع النجوم
+class Positionchild extends StatelessWidget {
+  final double top, left; final Widget child;
+  const Positionchild({super.key, required this.top, required this.left, required this.child});
+  @override
+  Widget build(BuildContext context) => Positioned(top: top, left: left, child: child);
 }
