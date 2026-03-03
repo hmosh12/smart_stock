@@ -8,19 +8,28 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          flutter-version: '3.19.0'
 
-      - name: Inject Code and Config
+      - name: Setup Project and Dependencies
         run: |
+          # إنشاء مشروع جديد
           flutter create --project-name smart_stock build_dir
-          rm build_dir/lib/main.dart
+          
+          # استبدال الملفات
           cp main.dart build_dir/lib/main.dart
           cp pubspec.yaml build_dir/pubspec.yaml
-
-      - name: Build Final APK
-        working-directory: build_dir
-        run: |
+          
+          # الدخول للمجلد وتنفيذ الأوامر
+          cd build_dir
           flutter pub get
-          flutter build apk --debug --no-tree-shake-icons
+          
+          # خطوة هامة لمكتبة sqflite لتجنب أخطاء Gradle
+          cd android
+          echo "org.gradle.jvmargs=-Xmx1536M" >> gradle.properties
+
+      - name: Build APK
+        working-directory: build_dir
+        run: flutter build apk --debug --no-tree-shake-icons
 
       - name: Upload
         uses: actions/upload-artifact@v4
