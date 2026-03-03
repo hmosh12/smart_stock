@@ -13,13 +13,14 @@ jobs:
 
       - name: Create Fresh Project
         run: |
-          # إنشاء مشروع جديد تماماً بنفس اسم مستودعك
+          # إنشاء مشروع جديد تماماً باسم مستودعك
           flutter create --project-name smart_stock my_build_folder
           
-          # استبدال الكود الافتراضي بكودك الذي رفعته يدوياً
+          # حذف ملف الكود الافتراضي وزرع كودك مكانه
+          rm my_build_folder/lib/main.dart
           cp main.dart my_build_folder/lib/main.dart
           
-          # استبدال ملف الإعدادات بملفك الذي أنشأته
+          # زرع ملف الإعدادات الخاص بك
           cp pubspec.yaml my_build_folder/pubspec.yaml
 
       - name: Get Dependencies
