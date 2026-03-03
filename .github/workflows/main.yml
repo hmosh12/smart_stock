@@ -9,24 +9,22 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Create Project and Injects Code
+      - name: Recreate Project structure
         run: |
-          # إنشاء مشروع فلاتر كامل ونظيف داخل السيرفر
+          # إنشاء هيكل مشروع جديد ونظيف
           flutter create --project-name smart_stock build_dir
-          
-          # استبدال الكود الافتراضي بكودك (main.dart)
+          rm build_dir/lib/main.dart
           cp main.dart build_dir/lib/main.dart
-          
-          # استبدال الإعدادات بملفك (pubspec.yaml)
           cp pubspec.yaml build_dir/pubspec.yaml
 
-      - name: Build Final APK
+      - name: Build Process
         working-directory: build_dir
         run: |
           flutter pub get
+          flutter clean
           flutter build apk --debug --no-tree-shake-icons
 
-      - name: Upload Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: SmartStock-App
