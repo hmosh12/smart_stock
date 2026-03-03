@@ -8,23 +8,17 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-
-      - name: Recreate Project structure
+      - name: Auto-Fix and Build
         run: |
-          # إنشاء هيكل مشروع جديد ونظيف
           flutter create --project-name smart_stock build_dir
-          rm build_dir/lib/main.dart
           cp main.dart build_dir/lib/main.dart
           cp pubspec.yaml build_dir/pubspec.yaml
-
-      - name: Build Process
-        working-directory: build_dir
-        run: |
+          cd build_dir
           flutter pub get
-          flutter clean
+          # هذا الأمر سيفحص كودك ويخبرنا بمكان الخطأ بالضبط
+          flutter analyze || true 
           flutter build apk --debug --no-tree-shake-icons
-
-      - name: Upload APK
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: SmartStock-App
