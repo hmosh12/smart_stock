@@ -5,18 +5,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      
-      - name: Install Dependencies
+
+      - name: Create Fresh Project
+        run: |
+          # إنشاء مشروع جديد تماماً بنفس اسم مستودعك
+          flutter create --project-name smart_stock my_build_folder
+          
+          # استبدال الكود الافتراضي بكودك الذي رفعته يدوياً
+          cp main.dart my_build_folder/lib/main.dart
+          
+          # استبدال ملف الإعدادات بملفك الذي أنشأته
+          cp pubspec.yaml my_build_folder/pubspec.yaml
+
+      - name: Get Dependencies
+        working-directory: my_build_folder
         run: flutter pub get
 
       - name: Build APK
+        working-directory: my_build_folder
         run: flutter build apk --debug --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: SmartStock-App
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          path: my_build_folder/build/app/outputs/flutter-apk/app-debug.apk
