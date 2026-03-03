@@ -8,12 +8,15 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      - run: |
+      - name: Preparation
+        run: |
           flutter create --project-name smart_stock my_app
+          # نقل الملف الذي رفعته يدوياً إلى مكانه الصحيح
           cp main.dart my_app/lib/main.dart
           cd my_app
           flutter build apk --debug --no-tree-shake-icons
-      - uses: actions/upload-artifact@v4
+      - name: Upload
+        uses: actions/upload-artifact@v4
         with:
-          name: My-Smart-App
+          name: SmartStock-APK
           path: my_app/build/app/outputs/flutter-apk/app-debug.apk
