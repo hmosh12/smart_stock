@@ -10,29 +10,28 @@ jobs:
           channel: 'stable'
           flutter-version: '3.19.0'
 
-      - name: Setup Project and Dependencies
+      - name: Create and Fix Project
         run: |
-          # إنشاء مشروع جديد
+          # 1. إنشاء المشروع
           flutter create --project-name smart_stock build_dir
           
-          # استبدال الملفات
+          # 2. نقل ملفاتك
           cp main.dart build_dir/lib/main.dart
           cp pubspec.yaml build_dir/pubspec.yaml
           
-          # الدخول للمجلد وتنفيذ الأوامر
-          cd build_dir
-          flutter pub get
-          
-          # خطوة هامة لمكتبة sqflite لتجنب أخطاء Gradle
-          cd android
-          echo "org.gradle.jvmargs=-Xmx1536M" >> gradle.properties
+          # 3. تعديل نسخة الأندرويد (هام جداً لمكتبة sqflite)
+          sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 34/g' build_dir/android/app/build.gradle
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' build_dir/android/app/build.gradle
+          sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 34/g' build_dir/android/app/build.gradle
 
-      - name: Build APK
+      - name: Final Build
         working-directory: build_dir
-        run: flutter build apk --debug --no-tree-shake-icons
+        run: |
+          flutter pub get
+          flutter build apk --debug --no-tree-shake-icons
 
-      - name: Upload
+      - name: Download Link
         uses: actions/upload-artifact@v4
         with:
-          name: SmartStock-App
+          name: SmartStock-Final
           path: build_dir/build/app/outputs/flutter-apk/app-debug.apk
