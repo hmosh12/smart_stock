@@ -1,22 +1,16 @@
 name: smart_stock
-description: "Smart Stock Management Pro - Falcon Version"
+description: "Smart Stock Management Pro"
 publish_to: 'none'
 version: 1.0.0+1
 
-# تحديد إصدار لغة الدارت المتوافق مع الكود
 environment:
   sdk: '>=3.2.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  
-  # الأيقونات الأساسية
   cupertino_icons: ^1.0.6
-  
-  # المكتبات التي يحتاجها كودك ليعمل (قاعدة البيانات والمسارات)
-  sqflite: 2.3.0
-  path: 1.9.0
+  get_storage: ^2.1.1  # المكتبة الوحيدة المطلوبة للتخزين
 
 dev_dependencies:
   flutter_test:
@@ -24,5 +18,4 @@ dev_dependencies:
   flutter_lints: ^3.0.0
 
 flutter:
-  # تفعيل نظام التصميم Material Design (هام للأزرار والقوائم في كودك)
   uses-material-design: true
